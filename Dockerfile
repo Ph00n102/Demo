@@ -1,13 +1,21 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 
-COPY *.csproj ./
-RUN dotnet restore
+USER app
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG configuration=Release
+WORKDIR /src
+COPY ["demo.csproj", "./"]
+RUN dotnet restore "demo.csproj"
+COPY . .
+WORKDIR "/src/."
+RUN dotnet build "demo.csproj" -c $configuration -o /app/build
 
-COPY . ./
-RUN dotnet publish -c Release -o out
+FROM build AS publish
+ARG configuration=Release
+RUN dotnet publish "demo.csproj" -c $configuration -o /app/publish /p:UseAppHost=false
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS final-env
+FROM base AS final
 WORKDIR /app
-COPY --from=build-env /app/out .
+COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "demo.dll"]

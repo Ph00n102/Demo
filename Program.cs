@@ -14,6 +14,16 @@ builder.Services.AddDbContext<DataContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
+builder.Services.AddCors(option =>    //  เพิ่มใหม่
+{
+    option.AddDefaultPolicy(
+        Policy =>
+        {
+             Policy.AllowAnyOrigin();
+        }
+    );
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -28,7 +38,8 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
-
+app.UseCors();  //  เพิ่มใหม่ 
+app.Urls.Add("http://*:5588");
 app.Run();
 
 record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
